@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Admin Panel – SNMV OCM</title>
+    <meta name="description" content="SNMV Admin Panel – Manage and resolve student complaints." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body class="dashboard-page">
+
+    <!-- Page Loader -->
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-ring"></div>
+        <p>Loading Admin Panel…</p>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">🛡️</div>
+            <div class="logo-text">
+                <strong>SNMV OCM</strong>
+                <span>Admin Panel</span>
+            </div>
+        </div>
+
+        <nav style="flex:1;overflow-y:auto;padding-bottom:1rem;">
+            <div class="nav-section">
+                <div class="nav-label">Management</div>
+                <button class="nav-link active" id="nav-overview" onclick="showSection('overview')"><span
+                        class="nav-icon">📊</span> Overview</button>
+                <button class="nav-link" id="nav-complaints" onclick="showSection('complaints')"><span
+                        class="nav-icon">📋</span> All Complaints <span class="nav-badge"
+                        id="adminPendingBadge">0</span></button>
+                <button class="nav-link" id="nav-students" onclick="showSection('students')"><span
+                        class="nav-icon">🎓</span> Students</button>
+                <button class="nav-link" id="nav-reports" onclick="showSection('reports')"><span
+                        class="nav-icon">📈</span> Reports</button>
+            </div>
+            <div class="nav-section">
+                <div class="nav-label">Settings</div>
+                <button class="nav-link" id="nav-settings" onclick="showSection('settings')"><span
+                        class="nav-icon">⚙️</span> Settings</button>
+                <button class="nav-link" id="nav-anotifications" onclick="showSection('anotifications')"><span
+                        class="nav-icon">🔔</span> Notifications <span class="nav-badge">5</span></button>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="avatar" id="adminAvatar">A</div>
+                <div class="user-info">
+                    <strong id="adminName">Admin</strong>
+                    <span>Administrator</span>
+                </div>
+                <button class="logout-btn" onclick="logout()" title="Logout">🚪</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <div>
+                    <div class="page-title" id="adminTopbarTitle">Overview</div>
+                    <div class="breadcrumb">SNMV College › Admin Panel</div>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <button class="topbar-btn" onclick="showSection('anotifications')">🔔 <span
+                        class="notif-dot"></span></button>
+                <button class="topbar-btn" onclick="exportCSV()">⬇️ Export</button>
+                <button class="topbar-btn" onclick="logout()"
+                    style="background:#fff0f0;border-color:#ffcdd2;color:#c62828;">🚪 Logout</button>
+            </div>
+        </div>
+
+        <div class="content-area">
+
+            <!-- ====== OVERVIEW ====== -->
+            <section id="section-overview">
+                <div class="stats-grid" id="adminStats"></div>
+
+                <div class="two-col">
+                    <!-- Monthly Chart -->
+                    <div class="card">
+                        <div class="section-header">
+                            <span class="section-title">📊 Complaints by Month</span>
+                        </div>
+                        <div class="chart-wrap" id="monthlyChart"></div>
+                        <div style="height:1.5rem;"></div>
+                    </div>
+
+                    <!-- Category Breakdown -->
+                    <div class="card">
+                        <div class="section-header"><span class="section-title">📂 By Category</span></div>
+                        <div id="categoryBreakdown"></div>
+                    </div>
+                </div>
+
+                <div class="two-col" style="margin-top:1.5rem;">
+                    <!-- Recent Complaints Table -->
+                    <div class="card">
+                        <div class="section-header">
+                            <span class="section-title">🕐 Recent Complaints</span>
+                            <button class="btn-primary btn-sm" onclick="showSection('complaints')">View All</button>
+                        </div>
+                        <div class="table-wrapper">
+                            <table class="data-table" id="recentTable"></table>
+                        </div>
+                    </div>
+
+                    <!-- Quick Status Overview -->
+                    <div class="card">
+                        <div class="section-title" style="margin-bottom:1.5rem;">⚡ Quick Actions</div>
+                        <div style="display:flex;flex-direction:column;gap:0.75rem;">
+                            <button class="btn-primary" onclick="showSection('complaints')"
+                                style="justify-content:flex-start;gap:0.75rem;">📋 Manage All Complaints</button>
+                            <button class="btn-outline" onclick="filterByStatus('pending')" style="text-align:left;">⏳
+                                View Pending Only</button>
+                            <button class="btn-outline" onclick="filterByStatus('in-progress')"
+                                style="text-align:left;">🔄 View In-Progress</button>
+                            <button class="btn-outline" onclick="exportCSV()" style="text-align:left;">📥 Export Report
+                                (CSV)</button>
+                        </div>
+                        <div style="margin-top:1.5rem;">
+                            <div class="section-title" style="margin-bottom:0.75rem;font-size:0.95rem;">Resolution Rate
+                            </div>
+                            <div id="resolutionRate"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ====== ALL COMPLAINTS ====== -->
+            <section id="section-complaints" style="display:none;">
+                <div class="section-header">
+                    <span class="section-title">📋 All Complaints</span>
+                    <span id="complaintCount" style="font-size:0.85rem;color:var(--text-muted);"></span>
+                </div>
+                <div class="filter-bar">
+                    <div class="search-input-wrap">
+                        <span class="s-icon">🔍</span>
+                        <input type="text" placeholder="Search by ID, name, subject…" id="adminSearch"
+                            oninput="renderAllComplaints()" />
+                    </div>
+                    <select class="filter-select" id="adminStatusFilter" onchange="renderAllComplaints()">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                    <select class="filter-select" id="adminCatFilter" onchange="renderAllComplaints()">
+                        <option value="">All Categories</option>
+                        <option>Academic</option>
+                        <option>Facilities</option>
+                        <option>Hostel</option>
+                        <option>Transport</option>
+                        <option>Library</option>
+                        <option>Canteen</option>
+                        <option>Sports</option>
+                        <option>Administration</option>
+                        <option>Other</option>
+                    </select>
+                    <select class="filter-select" id="adminPriorityFilter" onchange="renderAllComplaints()">
+                        <option value="">All Priority</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                    </select>
+                </div>
+                <div class="card">
+                    <div class="table-wrapper">
+                        <table class="data-table" id="allComplaintsTable"></table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ====== STUDENTS ====== -->
+            <section id="section-students" style="display:none;">
+                <div class="section-title" style="margin-bottom:1.25rem;">🎓 Registered Students</div>
+                <div class="card">
+                    <div class="table-wrapper">
+                        <table class="data-table" id="studentsTable"></table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ====== REPORTS ====== -->
+            <section id="section-reports" style="display:none;">
+                <div class="section-title" style="margin-bottom:1.5rem;">📈 Reports & Analytics</div>
+                <div class="three-col" id="reportCards"></div>
+                <div class="two-col" style="margin-top:1.5rem;">
+                    <div class="card">
+                        <div class="section-title" style="margin-bottom:1rem;">Complaints by Department</div>
+                        <div id="deptChart"></div>
+                    </div>
+                    <div class="card">
+                        <div class="section-title" style="margin-bottom:1rem;">Priority Distribution</div>
+                        <div id="priorityChart"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ====== SETTINGS ====== -->
+            <section id="section-settings" style="display:none;">
+                <div class="settings-grid">
+                    <div class="profile-card">
+                        <div class="profile-avatar-large" id="adminAvatarBig">A<div class="avatar-edit">✏️</div>
+                        </div>
+                        <h3 id="adminProfileName" style="font-size:1.1rem;font-weight:700;color:var(--primary);"></h3>
+                        <p style="color:var(--text-muted);font-size:0.85rem;margin-top:0.25rem;">Administrator</p>
+                        <div style="margin-top:1.5rem;display:flex;flex-direction:column;gap:0.5rem;text-align:left;">
+                            <div
+                                style="font-size:0.82rem;color:var(--text-secondary);padding:0.5rem;background:var(--surface-2);border-radius:8px;">
+                                📧 admin@snmv.edu.in</div>
+                            <div
+                                style="font-size:0.82rem;color:var(--text-secondary);padding:0.5rem;background:var(--surface-2);border-radius:8px;">
+                                📞 9876543200</div>
+                        </div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:1.25rem;">
+                        <div class="card">
+                            <div class="section-title" style="margin-bottom:1rem;">System Settings</div>
+                            <div style="display:flex;flex-direction:column;gap:1rem;">
+                                <div
+                                    style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem;background:var(--surface-2);border-radius:10px;">
+                                    <div><strong style="font-size:0.9rem;">Email Notifications</strong>
+                                        <p style="font-size:0.78rem;color:var(--text-muted);">Send email to students on
+                                            status change</p>
+                                    </div>
+                                    <label class="toggle-switch"><input type="checkbox" checked /><span
+                                            class="ts-slider"></span></label>
+                                </div>
+                                <div
+                                    style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem;background:var(--surface-2);border-radius:10px;">
+                                    <div><strong style="font-size:0.9rem;">Auto-assign Priority</strong>
+                                        <p style="font-size:0.78rem;color:var(--text-muted);">AI-based priority
+                                            suggestion</p>
+                                    </div>
+                                    <label class="toggle-switch"><input type="checkbox" /><span
+                                            class="ts-slider"></span></label>
+                                </div>
+                                <div
+                                    style="display:flex;justify-content:space-between;align-items:center;padding:0.75rem;background:var(--surface-2);border-radius:10px;">
+                                    <div><strong style="font-size:0.9rem;">Public Complaint Board</strong>
+                                        <p style="font-size:0.78rem;color:var(--text-muted);">Allow anonymous complaint
+                                            viewing</p>
+                                    </div>
+                                    <label class="toggle-switch"><input type="checkbox" /><span
+                                            class="ts-slider"></span></label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="section-title" style="margin-bottom:1rem;">Change Admin Password</div>
+                            <div class="form-grid">
+                                <div><label class="form-label">Current Password</label><input class="form-input"
+                                        type="password" id="adminCurPass" /></div>
+                                <div><label class="form-label">New Password</label><input class="form-input"
+                                        type="password" id="adminNewPass" /></div>
+                            </div>
+                            <button class="btn-outline" style="margin-top:1rem;"
+                                onclick="showToast('Password updated!','success')">🔒 Update Password</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ====== ADMIN NOTIFICATIONS ====== -->
+            <section id="section-anotifications" style="display:none;">
+                <div class="card" style="max-width:700px;">
+                    <div class="section-title" style="margin-bottom:1rem;">🔔 Notifications</div>
+                    <ul class="notif-list" id="adminNotifList"></ul>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+    <!-- Resolve/Update Complaint Modal -->
+    <div class="modal-overlay" id="resolveModal" style="display:none;"
+        onclick="if(event.target===this)closeModal('resolveModal')">
+        <div class="modal-box" style="max-width:600px;max-height:90vh;overflow-y:auto;">
+            <button class="modal-close" onclick="closeModal('resolveModal')">✕</button>
+            <div id="resolveContent"></div>
+        </div>
+    </div>
+
+    <!-- View Complaint Modal -->
+    <div class="modal-overlay" id="adminDetailModal" style="display:none;"
+        onclick="if(event.target===this)closeModal('adminDetailModal')">
+        <div class="modal-box" style="max-width:640px;max-height:90vh;overflow-y:auto;">
+            <button class="modal-close" onclick="closeModal('adminDetailModal')">✕</button>
+            <div id="adminDetailContent"></div>
+        </div>
+    </div>
+
+    <style>
+        /* Toggle Switch */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 44px;
+            height: 24px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .ts-slider {
+            position: absolute;
+            cursor: pointer;
+            inset: 0;
+            background: #ccc;
+            border-radius: 24px;
+            transition: .4s;
+        }
+
+        .ts-slider::before {
+            content: '';
+            position: absolute;
+            width: 18px;
+            height: 18px;
+            left: 3px;
+            bottom: 3px;
+            background: #fff;
+            border-radius: 50%;
+            transition: .4s;
+        }
+
+        .toggle-switch input:checked+.ts-slider {
+            background: var(--primary);
+        }
+
+        .toggle-switch input:checked+.ts-slider::before {
+            transform: translateX(20px);
+        }
+    </style>
+
+    <script src="js/app.js"></script>
+    <script>
+        const admin = requireAuth('admin');
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('pageLoader').style.opacity = '0';
+                setTimeout(() => document.getElementById('pageLoader').style.display = 'none', 400);
+            }, 800);
+            initAdmin();
+        });
+
+        function initAdmin() {
+            document.getElementById('adminName').textContent = admin.name;
+            document.getElementById('adminAvatar').textContent = admin.name.charAt(0);
+            document.getElementById('adminProfileName').textContent = admin.name;
+            document.getElementById('adminAvatarBig').innerHTML = admin.name.charAt(0) + `<div class="avatar-edit">✏️</div>`;
+            updatePendingBadge();
+            renderOverview();
+            renderAdminNotifications();
+        }
+
+        // ---- Sections ----
+        const ASECTIONS = ['overview', 'complaints', 'students', 'reports', 'settings', 'anotifications'];
+        function showSection(name) {
+            ASECTIONS.forEach(s => {
+                document.getElementById('section-' + s).style.display = s === name ? '' : 'none';
+                const nav = document.getElementById('nav-' + s);
+                if (nav) nav.classList.toggle('active', s === name);
+            });
+            const titles = { overview: 'Dashboard Overview', complaints: 'All Complaints', students: 'Student Management', reports: 'Reports & Analytics', settings: 'Settings', anotifications: 'Notifications' };
+            document.getElementById('adminTopbarTitle').textContent = titles[name] || name;
+            if (name === 'complaints') renderAllComplaints();
+            if (name === 'students') renderStudents();
+            if (name === 'reports') renderReports();
+        }
+
+        // ---- Overview ----
+        function renderOverview() {
+            const total = COMPLAINTS.length;
+            const pending = COMPLAINTS.filter(c => c.status === 'pending').length;
+            const inprog = COMPLAINTS.filter(c => c.status === 'in-progress').length;
+            const resolved = COMPLAINTS.filter(c => c.status === 'resolved').length;
+
+            document.getElementById('adminStats').innerHTML = `
+    <div class="stat-card blue"><div class="stat-card-icon">📋</div><div class="stat-card-value">${total}</div><div class="stat-card-label">Total Complaints</div><div class="stat-card-trend trend-up">↑ 12% this month</div></div>
+    <div class="stat-card orange"><div class="stat-card-icon">⏳</div><div class="stat-card-value">${pending}</div><div class="stat-card-label">Pending Action</div><div class="stat-card-trend trend-down">Need review</div></div>
+    <div class="stat-card red"><div class="stat-card-icon">🔄</div><div class="stat-card-value">${inprog}</div><div class="stat-card-label">In Progress</div><div class="stat-card-trend">Active cases</div></div>
+    <div class="stat-card green"><div class="stat-card-icon">✅</div><div class="stat-card-value">${resolved}</div><div class="stat-card-label">Resolved</div><div class="stat-card-trend trend-up">↑ 98% satisfaction</div></div>
+  `;
+
+            // Monthly mock chart
+            const months = ['Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            const data = [4, 7, 5, 9, 6, 8];
+            const max = Math.max(...data);
+            document.getElementById('monthlyChart').innerHTML = months.map((m, i) => `
+    <div class="chart-bar" style="height:${(data[i] / max) * 100}%;" data-label="${m}" title="${data[i]} complaints in ${m}"></div>
+  `).join('');
+
+            // Category breakdown
+            const cats = {};
+            COMPLAINTS.forEach(c => cats[c.category] = (cats[c.category] || 0) + 1);
+            document.getElementById('categoryBreakdown').innerHTML = Object.entries(cats).sort((a, b) => b[1] - a[1]).map(([cat, count]) => `
+    <div style="margin-bottom:0.75rem;">
+      <div style="display:flex;justify-content:space-between;font-size:0.82rem;color:var(--text-secondary);margin-bottom:3px;"><span>${cat}</span><span>${count}</span></div>
+      <div style="background:var(--surface-2);border-radius:50px;height:7px;overflow:hidden;"><div style="height:100%;width:${Math.round((count / total) * 100)}%;background:var(--gradient-main);border-radius:50px;"></div></div>
+    </div>`).join('');
+
+            // Recent table
+            const recent = COMPLAINTS.slice(0, 5);
+            document.getElementById('recentTable').innerHTML = `
+    <thead><tr><th>ID</th><th>Subject</th><th>Student</th><th>Status</th><th>Action</th></tr></thead>
+    <tbody>${recent.map(c => `<tr>
+      <td style="font-size:0.75rem;color:var(--text-muted);">${c.id}</td>
+      <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${c.subject}</td>
+      <td>${c.studentName}</td>
+      <td>${statusBadge(c.status)}</td>
+      <td><button class="btn-primary btn-sm" onclick="openResolve('${c.id}')">Manage</button></td>
+    </tr>`).join('')}</tbody>`;
+
+            // Resolution rate
+            const rate = Math.round((resolved / total) * 100);
+            document.getElementById('resolutionRate').innerHTML = `
+    <div style="font-size:2rem;font-weight:800;color:var(--success);">${rate}%</div>
+    <div style="background:var(--surface-2);border-radius:50px;height:10px;overflow:hidden;margin-top:0.5rem;">
+      <div style="height:100%;width:${rate}%;background:linear-gradient(90deg,#2e7d32,#66bb6a);border-radius:50px;transition:width 1s ease;"></div>
+    </div>
+    <div style="font-size:0.78rem;color:var(--text-muted);margin-top:0.4rem;">${resolved} of ${total} complaints resolved</div>`;
+        }
+
+        // ---- All Complaints Table ----
+        function renderAllComplaints() {
+            const q = (document.getElementById('adminSearch').value || '').toLowerCase();
+            const st = document.getElementById('adminStatusFilter').value;
+            const cat = document.getElementById('adminCatFilter').value;
+            const pri = document.getElementById('adminPriorityFilter').value;
+
+            let list = COMPLAINTS.filter(c => {
+                if (st && c.status !== st) return false;
+                if (cat && c.category !== cat) return false;
+                if (pri && c.priority !== pri) return false;
+                if (q && !c.id.toLowerCase().includes(q) && !c.subject.toLowerCase().includes(q) && !c.studentName.toLowerCase().includes(q)) return false;
+                return true;
+            });
+
+            document.getElementById('complaintCount').textContent = `Showing ${list.length} complaints`;
+            document.getElementById('allComplaintsTable').innerHTML = list.length ? `
+    <thead><tr><th>ID</th><th>Date</th><th>Subject</th><th>Student</th><th>Dept</th><th>Category</th><th>Priority</th><th>Status</th><th>Actions</th></tr></thead>
+    <tbody>${list.map(c => `<tr id="row-${c.id}">
+      <td style="font-size:0.75rem;font-weight:600;color:var(--primary);">${c.id}</td>
+      <td style="font-size:0.8rem;color:var(--text-muted);">${formatDate(c.date)}</td>
+      <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:pointer;" onclick="viewAdminDetail('${c.id}')" title="${c.subject}">${c.subject}</td>
+      <td style="font-size:0.85rem;">${c.studentName}</td>
+      <td style="font-size:0.8rem;color:var(--text-muted);">${c.dept}</td>
+      <td>${c.category}</td>
+      <td>${priorityTag(c.priority)}</td>
+      <td>${statusBadge(c.status)}</td>
+      <td><div style="display:flex;gap:0.4rem;">
+        <button class="btn-primary btn-sm" onclick="openResolve('${c.id}')">✏️ Manage</button>
+        <button class="btn-outline btn-sm" onclick="viewAdminDetail('${c.id}')">👁️</button>
+      </div></td>
+    </tr>`).join('')}</tbody>`
+                : `<thead><tr><th colspan="9" style="text-align:center;color:var(--text-muted);padding:2rem;">No complaints match your filters.</th></tr></thead>`;
+        }
+
+        // ---- View Complaint Detail (Admin) ----
+        function viewAdminDetail(id) {
+            const c = COMPLAINTS.find(x => x.id === id);
+            if (!c) return;
+            document.getElementById('adminDetailContent').innerHTML = `
+    <div style="margin-bottom:1.5rem;display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:0.5rem;">
+      <div><div class="complaint-id">${c.id}</div><h3 style="font-size:1.2rem;font-weight:700;color:var(--primary);">${c.subject}</h3></div>
+      ${statusBadge(c.status)}
+    </div>
+    <div class="two-col" style="gap:0.75rem;margin-bottom:1.2rem;">
+      <div style="background:var(--surface-2);border-radius:10px;padding:0.75rem;font-size:0.82rem;"><b>Student</b><div style="color:var(--text-secondary);margin-top:2px;">${c.studentName} (${c.studentId})</div></div>
+      <div style="background:var(--surface-2);border-radius:10px;padding:0.75rem;font-size:0.82rem;"><b>Department</b><div style="color:var(--text-secondary);margin-top:2px;">${c.dept}</div></div>
+      <div style="background:var(--surface-2);border-radius:10px;padding:0.75rem;font-size:0.82rem;"><b>Category</b><div style="color:var(--text-secondary);margin-top:2px;">${c.category}</div></div>
+      <div style="background:var(--surface-2);border-radius:10px;padding:0.75rem;font-size:0.82rem;"><b>Priority</b><div style="margin-top:4px;">${priorityTag(c.priority)}</div></div>
+    </div>
+    <div style="margin-bottom:1.2rem;"><div class="form-label" style="margin-bottom:0.5rem;">Description</div><div style="background:var(--surface-2);padding:1rem;border-radius:10px;font-size:0.88rem;line-height:1.7;color:var(--text-secondary);">${c.description}</div></div>
+    ${c.response ? `<div style="margin-bottom:1.2rem;"><div class="form-label" style="margin-bottom:0.5rem;">Current Response</div><div style="background:#e8f5e9;padding:1rem;border-radius:10px;font-size:0.88rem;color:#2e7d32;border-left:3px solid #2e7d32;">💬 ${c.response}</div></div>` : ''}
+    <button class="btn-primary" onclick="closeModal('adminDetailModal');openResolve('${c.id}')">✏️ Manage This Complaint</button>
+  `;
+            openModal('adminDetailModal');
+        }
+
+        // ---- Open Resolve Modal ----
+        function openResolve(id) {
+            const c = COMPLAINTS.find(x => x.id === id);
+            if (!c) return;
+            document.getElementById('resolveContent').innerHTML = `
+    <h3 style="font-size:1.2rem;font-weight:700;color:var(--primary);margin-bottom:0.3rem;">Manage Complaint</h3>
+    <div class="complaint-id" style="margin-bottom:1.2rem;">${c.id} – ${c.subject}</div>
+    <div style="background:var(--surface-2);padding:1rem;border-radius:10px;font-size:0.85rem;line-height:1.7;color:var(--text-secondary);margin-bottom:1.5rem;">${c.description}</div>
+
+    <div class="form-grid">
+      <div>
+        <label class="form-label">Update Status</label>
+        <select class="form-select" id="resolveStatus">
+          ${['pending', 'in-progress', 'resolved', 'rejected'].map(s => `<option value="${s}" ${c.status === s ? 'selected' : ''}>${s.charAt(0).toUpperCase() + s.slice(1)}</option>`).join('')}
+        </select>
+      </div>
+      <div>
+        <label class="form-label">Priority</label>
+        <select class="form-select" id="resolvePriority">
+          ${['low', 'medium', 'high'].map(p => `<option value="${p}" ${c.priority === p ? 'selected' : ''}>${p.charAt(0).toUpperCase() + p.slice(1)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-full">
+        <label class="form-label">Response / Remarks</label>
+        <textarea class="form-textarea" id="resolveResponse" placeholder="Enter your response to the student…" style="min-height:100px;">${c.response}</textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:1rem;margin-top:1.25rem;">
+      <button class="btn-primary" onclick="saveResolve('${c.id}')">💾 Save Changes</button>
+      <button class="btn-outline" onclick="closeModal('resolveModal')">Cancel</button>
+    </div>
+  `;
+            openModal('resolveModal');
+        }
+
+        function saveResolve(id) {
+            const c = COMPLAINTS.find(x => x.id === id);
+            if (!c) return;
+            c.status = document.getElementById('resolveStatus').value;
+            c.priority = document.getElementById('resolvePriority').value;
+            c.response = document.getElementById('resolveResponse').value;
+            c.updatedDate = today();
+            closeModal('resolveModal');
+            showToast(`✅ Complaint ${id} updated to "${c.status}"`, 'success');
+            updatePendingBadge();
+            renderAllComplaints();
+            renderOverview();
+        }
+
+        // ---- Students ----
+        function renderStudents() {
+            const studs = USERS.filter(u => u.role === 'student');
+            document.getElementById('studentsTable').innerHTML = `
+    <thead><tr><th>ID</th><th>Name</th><th>Department</th><th>Year</th><th>Email</th><th>Complaints</th><th>Status</th></tr></thead>
+    <tbody>${studs.map(s => {
+                const cnt = COMPLAINTS.filter(c => c.studentId === s.id).length;
+                const pen = COMPLAINTS.filter(c => c.studentId === s.id && c.status === 'pending').length;
+                return `<tr>
+        <td style="font-size:0.8rem;font-weight:600;color:var(--primary);">${s.id}</td>
+        <td><div style="display:flex;align-items:center;gap:0.6rem;"><div class="avatar" style="width:30px;height:30px;font-size:0.8rem;">${s.name.charAt(0)}</div>${s.name}</div></td>
+        <td>${s.dept}</td>
+        <td style="font-size:0.82rem;">${s.year}</td>
+        <td style="font-size:0.8rem;color:var(--text-muted);">${s.email}</td>
+        <td><span style="font-weight:700;color:var(--primary);">${cnt}</span> <span style="font-size:0.75rem;color:var(--text-muted);">(${pen} pending)</span></td>
+        <td><span class="badge badge-resolved">Active</span></td>
+      </tr>`;
+            }).join('')}</tbody>`;
+        }
+
+        // ---- Reports ----
+        function renderReports() {
+            const total = COMPLAINTS.length;
+            const resolved = COMPLAINTS.filter(c => c.status === 'resolved').length;
+            const avgDays = 4.2;
+            document.getElementById('reportCards').innerHTML = `
+    <div class="stat-card blue"><div class="stat-card-icon">📊</div><div class="stat-card-value">${total}</div><div class="stat-card-label">Total This Year</div></div>
+    <div class="stat-card green"><div class="stat-card-icon">✅</div><div class="stat-card-value">${Math.round((resolved / total) * 100)}%</div><div class="stat-card-label">Resolution Rate</div></div>
+    <div class="stat-card orange"><div class="stat-card-icon">⏱️</div><div class="stat-card-value">${avgDays}d</div><div class="stat-card-label">Avg Resolution Time</div></div>
+  `;
+
+            // Dept chart
+            const depts = {};
+            COMPLAINTS.forEach(c => depts[c.dept] = (depts[c.dept] || 0) + 1);
+            document.getElementById('deptChart').innerHTML = Object.entries(depts).map(([d, n]) => `
+    <div style="margin-bottom:0.75rem;">
+      <div style="display:flex;justify-content:space-between;font-size:0.82rem;color:var(--text-secondary);margin-bottom:3px;"><span>${d}</span><span>${n}</span></div>
+      <div style="background:var(--surface-2);border-radius:50px;height:8px;overflow:hidden;"><div style="height:100%;width:${Math.round((n / total) * 100)}%;background:var(--gradient-main);border-radius:50px;"></div></div>
+    </div>`).join('');
+
+            // Priority chart
+            const pris = { high: 0, medium: 0, low: 0 };
+            COMPLAINTS.forEach(c => pris[c.priority]++);
+            const colors = { high: '#c62828', medium: '#f57c00', low: '#2e7d32' };
+            document.getElementById('priorityChart').innerHTML = Object.entries(pris).map(([p, n]) => `
+    <div style="margin-bottom:0.75rem;">
+      <div style="display:flex;justify-content:space-between;font-size:0.82rem;color:var(--text-secondary);margin-bottom:3px;"><span style="text-transform:capitalize;">${p} Priority</span><span>${n}</span></div>
+      <div style="background:var(--surface-2);border-radius:50px;height:8px;overflow:hidden;"><div style="height:100%;width:${Math.round((n / total) * 100)}%;background:${colors[p]};border-radius:50px;"></div></div>
+    </div>`).join('');
+        }
+
+        // ---- Notifications ----
+        function renderAdminNotifications() {
+            const notifs = [
+                { icon: '🆕', cls: 'blue', title: 'New complaint submitted by Ravi Shankar', time: '10 min ago', unread: true },
+                { icon: '⏰', cls: 'orange', title: '3 complaints pending for over 7 days', time: '2 hrs ago', unread: true },
+                { icon: '✅', cls: 'green', title: 'Complaint CMP-2024-001 marked resolved', time: 'Yesterday', unread: false },
+                { icon: '📢', cls: 'orange', title: 'Monthly report is ready for download', time: '2 days ago', unread: true },
+                { icon: '🎓', cls: 'blue', title: 'New student STU003 registered', time: '3 days ago', unread: false }
+            ];
+            document.getElementById('adminNotifList').innerHTML = notifs.map(n => `
+    <li class="notif-item">
+      <div class="notif-icon ${n.cls}">${n.icon}</div>
+      <div class="notif-text"><p>${n.title}</p><span>${n.time}</span></div>
+      ${n.unread ? '<div class="notif-dot-unread"></div>' : ''}
+    </li>`).join('');
+        }
+
+        // ---- Helpers ----
+        function updatePendingBadge() {
+            document.getElementById('adminPendingBadge').textContent = COMPLAINTS.filter(c => c.status === 'pending').length;
+        }
+
+        function filterByStatus(status) {
+            showSection('complaints');
+            document.getElementById('adminStatusFilter').value = status;
+            renderAllComplaints();
+        }
+
+        function exportCSV() {
+            const headers = ['ID', 'Date', 'Subject', 'Student', 'Dept', 'Category', 'Priority', 'Status', 'Response'];
+            const rows = COMPLAINTS.map(c => [c.id, c.date, `"${c.subject}"`, c.studentName, c.dept, c.category, c.priority, c.status, `"${c.response}"`]);
+            const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'SNMV_Complaints.csv'; a.click();
+            showToast('📥 Report exported successfully!', 'success');
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Student Portal – SNMV OCM</title>
+    <meta name="description" content="SNMV Student Complaint Portal – Submit and track your complaints." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap"
+        rel="stylesheet" />
+    <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body class="dashboard-page">
+
+    <!-- Page Loader -->
+    <div class="page-loader" id="pageLoader">
+        <div class="loader-ring"></div>
+        <p>Loading your portal…</p>
+    </div>
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-icon">🎓</div>
+            <div class="logo-text">
+                <strong>SNMV OCM</strong>
+                <span>Student Portal</span>
+            </div>
+        </div>
+
+        <nav style="flex:1;overflow-y:auto;padding-bottom:1rem;">
+            <div class="nav-section">
+                <div class="nav-label">Main Menu</div>
+                <button class="nav-link active" id="nav-dashboard" onclick="showSection('dashboard')">
+                    <span class="nav-icon">🏠</span> Dashboard
+                </button>
+                <button class="nav-link" id="nav-submit" onclick="showSection('submit')">
+                    <span class="nav-icon">📝</span> Submit Complaint
+                </button>
+                <button class="nav-link" id="nav-mycomplaints" onclick="showSection('mycomplaints')">
+                    <span class="nav-icon">📋</span> My Complaints
+                    <span class="nav-badge" id="pendingBadge">0</span>
+                </button>
+                <button class="nav-link" id="nav-track" onclick="showSection('track')">
+                    <span class="nav-icon">🔍</span> Track Status
+                </button>
+            </div>
+            <div class="nav-section">
+                <div class="nav-label">Account</div>
+                <button class="nav-link" id="nav-profile" onclick="showSection('profile')">
+                    <span class="nav-icon">👤</span> My Profile
+                </button>
+                <button class="nav-link" id="nav-notifications" onclick="showSection('notifications')">
+                    <span class="nav-icon">🔔</span> Notifications
+                    <span class="nav-badge">3</span>
+                </button>
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-profile">
+                <div class="avatar" id="sidebarAvatar">A</div>
+                <div class="user-info">
+                    <strong id="sidebarName">Student</strong>
+                    <span id="sidebarId">Loading…</span>
+                </div>
+                <button class="logout-btn" onclick="logout()" title="Logout">🚪</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Topbar -->
+        <div class="topbar">
+            <div class="topbar-left">
+                <button class="topbar-btn" onclick="toggleSidebar()" style="display:none" id="menuBtn">☰</button>
+                <div>
+                    <div class="page-title" id="topbarTitle">Dashboard</div>
+                    <div class="breadcrumb">SNMV College › Student Portal</div>
+                </div>
+            </div>
+            <div class="topbar-right">
+                <button class="topbar-btn" onclick="showSection('notifications')" title="Notifications">
+                    🔔 <span class="notif-dot"></span>
+                </button>
+                <button class="topbar-btn" onclick="showSection('profile')" title="Profile">⚙️</button>
+                <button class="topbar-btn" onclick="logout()" title="Logout"
+                    style="background:#fff0f0;border-color:#ffcdd2;color:#c62828;">🚪 Logout</button>
+            </div>
+        </div>
+
+        <div class="content-area">
+
+            <!-- ====== DASHBOARD SECTION ====== -->
+            <section id="section-dashboard">
+                <div class="stats-grid" id="studentStats"></div>
+
+                <div class="two-col">
+                    <!-- Recent Complaints -->
+                    <div class="card">
+                        <div class="section-header">
+                            <span class="section-title">Recent Complaints</span>
+                            <button class="btn-primary btn-sm" onclick="showSection('mycomplaints')">View All</button>
+                        </div>
+                        <div id="recentComplaints"></div>
+                    </div>
+
+                    <!-- Quick Actions + Activity -->
+                    <div style="display:flex;flex-direction:column;gap:1.25rem;">
+                        <div class="card">
+                            <div class="section-title" style="margin-bottom:1rem;">Quick Actions</div>
+                            <div style="display:flex;flex-direction:column;gap:0.6rem;">
+                                <button class="btn-primary" onclick="showSection('submit')"
+                                    style="justify-content:center;">📝 Submit New Complaint</button>
+                                <button class="btn-outline" onclick="showSection('track')">🔍 Track Complaint</button>
+                                <button class="btn-outline" onclick="showSection('notifications')">🔔 View
+                                    Notifications</button>
+                            </div>
+                        </div>
+                        <div class="card">
+                            <div class="section-title" style="margin-bottom:1rem;">Complaint Summary</div>
+                            <div id="summaryChart"></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ====== SUBMIT COMPLAINT SECTION ====== -->
+            <section id="section-submit" style="display:none;">
+                <div class="card" style="max-width:800px;">
+                    <div class="section-header">
+                        <span class="section-title">📝 Submit New Complaint</span>
+                    </div>
+                    <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:1.5rem;">Fill in the form
+                        below clearly. Your complaint will be reviewed within 3 working days.</p>
+
+                    <form id="complaintForm" onsubmit="submitComplaint(event)">
+                        <div class="form-grid">
+                            <div>
+                                <label class="form-label required">Category</label>
+                                <select class="form-select" id="cmpCategory" required>
+                                    <option value="">-- Select Category --</option>
+                                    <option>Academic</option>
+                                    <option>Facilities</option>
+                                    <option>Hostel</option>
+                                    <option>Transport</option>
+                                    <option>Library</option>
+                                    <option>Canteen</option>
+                                    <option>Sports</option>
+                                    <option>Administration</option>
+                                    <option>Other</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="form-label required">Priority</label>
+                                <select class="form-select" id="cmpPriority" required>
+                                    <option value="">-- Select Priority --</option>
+                                    <option value="low">🟢 Low</option>
+                                    <option value="medium">🟡 Medium</option>
+                                    <option value="high">🔴 High</option>
+                                </select>
+                            </div>
+                            <div class="form-full">
+                                <label class="form-label required">Subject</label>
+                                <input class="form-input" id="cmpSubject" type="text"
+                                    placeholder="Brief title for your complaint" required maxlength="120" />
+                            </div>
+                            <div class="form-full">
+                                <label class="form-label required">Description</label>
+                                <textarea class="form-textarea" id="cmpDesc"
+                                    placeholder="Describe your issue in detail. Include dates, locations, and persons involved if relevant."
+                                    required minlength="30" style="min-height:150px;"></textarea>
+                            </div>
+                            <div class="form-full">
+                                <label class="form-label">Attach Supporting Document (Optional)</label>
+                                <div class="file-upload-zone" onclick="document.getElementById('cmpFile').click()">
+                                    <div class="upload-icon">📎</div>
+                                    <p>Click to upload or drag & drop</p>
+                                    <span>PNG, JPG, PDF up to 5MB</span>
+                                    <input type="file" id="cmpFile" style="display:none" accept=".png,.jpg,.jpeg,.pdf"
+                                        onchange="previewFile(this)" />
+                                </div>
+                                <div id="filePreview" style="margin-top:0.5rem;font-size:0.82rem;color:var(--primary);">
+                                </div>
+                            </div>
+                        </div>
+                        <div style="display:flex;gap:1rem;margin-top:1.5rem;">
+                            <button type="submit" class="btn-primary">🚀 Submit Complaint</button>
+                            <button type="reset" class="btn-outline"
+                                onclick="document.getElementById('filePreview').textContent=''">↺ Reset</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <!-- ====== MY COMPLAINTS SECTION ====== -->
+            <section id="section-mycomplaints" style="display:none;">
+                <div class="section-header">
+                    <span class="section-title">📋 My Complaints</span>
+                    <button class="btn-primary btn-sm" onclick="showSection('submit')">+ New Complaint</button>
+                </div>
+                <div class="filter-bar">
+                    <div class="search-input-wrap">
+                        <span class="s-icon">🔍</span>
+                        <input type="text" placeholder="Search complaints…" id="mySearchInput"
+                            oninput="renderMyComplaints()" />
+                    </div>
+                    <select class="filter-select" id="myStatusFilter" onchange="renderMyComplaints()">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="in-progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                        <option value="rejected">Rejected</option>
+                    </select>
+                    <select class="filter-select" id="myCategoryFilter" onchange="renderMyComplaints()">
+                        <option value="">All Categories</option>
+                        <option>Academic</option>
+                        <option>Facilities</option>
+                        <option>Hostel</option>
+                        <option>Transport</option>
+                        <option>Library</option>
+                        <option>Canteen</option>
+                        <option>Sports</option>
+                        <option>Administration</option>
+                        <option>Other</option>
+                    </select>
+                </div>
+                <div id="myComplaintsList"></div>
+            </section>
+
+            <!-- ====== TRACK SECTION ====== -->
+            <section id="section-track" style="display:none;">
+                <div class="card" style="max-width:700px;margin:0 auto;">
+                    <div class="section-title" style="margin-bottom:0.5rem;">🔍 Track Complaint Status</div>
+                    <p style="color:var(--text-secondary);font-size:0.88rem;margin-bottom:1.5rem;">Enter your Complaint
+                        ID to see its current status and admin responses.</p>
+                    <div style="display:flex;gap:1rem;margin-bottom:2rem;">
+                        <input class="form-input" id="trackId" placeholder="e.g. CMP-2024-001" style="flex:1;" />
+                        <button class="btn-primary" onclick="trackComplaint()">Track</button>
+                    </div>
+                    <div id="trackResult"></div>
+                </div>
+            </section>
+
+            <!-- ====== PROFILE SECTION ====== -->
+            <section id="section-profile" style="display:none;">
+                <div class="settings-grid">
+                    <div class="profile-card">
+                        <div class="profile-avatar-large" id="profileAvatarBig">A
+                            <div class="avatar-edit">✏️</div>
+                        </div>
+                        <h3 id="profileName" style="font-size:1.1rem;font-weight:700;color:var(--primary);">Student Name
+                        </h3>
+                        <p id="profileDept" style="color:var(--text-muted);font-size:0.85rem;margin-top:0.25rem;">
+                            Department</p>
+                        <p id="profileYear" style="color:var(--text-muted);font-size:0.82rem;"></p>
+                        <div style="margin-top:1.5rem;display:flex;flex-direction:column;gap:0.5rem;text-align:left;">
+                            <div
+                                style="font-size:0.82rem;color:var(--text-secondary);padding:0.5rem;background:var(--surface-2);border-radius:8px;display:flex;gap:0.5rem;align-items:center;">
+                                📧 <span id="profileEmail"></span></div>
+                            <div
+                                style="font-size:0.82rem;color:var(--text-secondary);padding:0.5rem;background:var(--surface-2);border-radius:8px;display:flex;gap:0.5rem;align-items:center;">
+                                📞 <span id="profilePhone"></span></div>
+                            <div
+                                style="font-size:0.82rem;color:var(--text-secondary);padding:0.5rem;background:var(--surface-2);border-radius:8px;display:flex;gap:0.5rem;align-items:center;">
+                                🆔 <span id="profileId"></span></div>
+                        </div>
+                    </div>
+                    <div style="display:flex;flex-direction:column;gap:1.25rem;">
+                        <div class="card">
+                            <div class="section-title" style="margin-bottom:1rem;">Update Profile</div>
+                            <div class="form-grid">
+                                <div><label class="form-label">Full Name</label><input class="form-input" id="editName"
+                                        type="text" /></div>
+                                <div><label class="form-label">Phone</label><input class="form-input" id="editPhone"
+                                        type="text" /></div>
+                                <div class="form-full"><label class="form-label">Email</label><input class="form-input"
+                                        id="editEmail" type="email" /></div>
+                            </div>
+                            <button class="btn-primary" style="margin-top:1rem;" onclick="saveProfile()">💾 Save
+                                Changes</button>
+                        </div>
+                        <div class="card">
+                            <div class="section-title" style="margin-bottom:1rem;">Change Password</div>
+                            <div class="form-grid">
+                                <div><label class="form-label">Current Password</label><input class="form-input"
+                                        type="password" id="curPass" /></div>
+                                <div><label class="form-label">New Password</label><input class="form-input"
+                                        type="password" id="newPass" /></div>
+                            </div>
+                            <button class="btn-outline" style="margin-top:1rem;" onclick="changePassword()">🔒 Update
+                                Password</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ====== NOTIFICATIONS SECTION ====== -->
+            <section id="section-notifications" style="display:none;">
+                <div class="card" style="max-width:700px;">
+                    <div class="section-title" style="margin-bottom:1rem;">🔔 Notifications</div>
+                    <ul class="notif-list" id="notifList"></ul>
+                </div>
+            </section>
+
+        </div><!-- /content-area -->
+    </div><!-- /main-content -->
+
+    <!-- Complaint Detail Modal -->
+    <div class="modal-overlay" id="detailModal" style="display:none;"
+        onclick="if(event.target===this)closeModal('detailModal')">
+        <div class="modal-box" style="max-width:640px;max-height:90vh;overflow-y:auto;">
+            <button class="modal-close" onclick="closeModal('detailModal')">✕</button>
+            <div id="detailContent"></div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+    <script>
+        // ---- Init ----
+        const user = requireAuth('student');
+
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('pageLoader').style.opacity = '0';
+                setTimeout(() => document.getElementById('pageLoader').style.display = 'none', 400);
+            }, 800);
+            initStudentDashboard();
+        });
+
+        function initStudentDashboard() {
+            document.getElementById('sidebarName').textContent = user.name;
+            document.getElementById('sidebarId').textContent = user.id;
+            document.getElementById('sidebarAvatar').textContent = user.name.charAt(0).toUpperCase();
+            updatePendingBadge();
+            renderDashboard();
+            populateProfile();
+            renderNotifications();
+        }
+
+        // ---- Section Navigation ----
+        const SECTIONS = ['dashboard', 'submit', 'mycomplaints', 'track', 'profile', 'notifications'];
+        function showSection(name) {
+            SECTIONS.forEach(s => {
+                document.getElementById('section-' + s).style.display = s === name ? '' : 'none';
+                const nav = document.getElementById('nav-' + s);
+                if (nav) nav.classList.toggle('active', s === name);
+            });
+            const titles = { dashboard: 'Dashboard', submit: 'Submit Complaint', mycomplaints: 'My Complaints', track: 'Track Complaint', profile: 'My Profile', notifications: 'Notifications' };
+            document.getElementById('topbarTitle').textContent = titles[name] || name;
+            if (name === 'mycomplaints') renderMyComplaints();
+            if (name === 'dashboard') renderDashboard();
+        }
+
+        // ---- Dashboard ----
+        function renderDashboard() {
+            const mine = getStudentComplaints(user.id);
+            const counts = { total: mine.length, pending: 0, inprogress: 0, resolved: 0 };
+            mine.forEach(c => {
+                if (c.status === 'pending') counts.pending++;
+                else if (c.status === 'in-progress') counts.inprogress++;
+                else if (c.status === 'resolved') counts.resolved++;
+            });
+
+            document.getElementById('studentStats').innerHTML = `
+    <div class="stat-card blue"><div class="stat-card-icon">📋</div><div class="stat-card-value">${counts.total}</div><div class="stat-card-label">Total Complaints</div></div>
+    <div class="stat-card orange"><div class="stat-card-icon">⏳</div><div class="stat-card-value">${counts.pending}</div><div class="stat-card-label">Pending</div></div>
+    <div class="stat-card red"><div class="stat-card-icon">🔄</div><div class="stat-card-value">${counts.inprogress}</div><div class="stat-card-label">In Progress</div></div>
+    <div class="stat-card green"><div class="stat-card-icon">✅</div><div class="stat-card-value">${counts.resolved}</div><div class="stat-card-label">Resolved</div></div>
+  `;
+
+            const recent = mine.slice(0, 3);
+            document.getElementById('recentComplaints').innerHTML = recent.length ? recent.map(c => complaintMiniCard(c)).join('') : `<div class="empty-state"><div class="empty-icon">📭</div><h3>No complaints yet</h3><p>Submit your first complaint to get started.</p></div>`;
+
+            // Summary donut-like bar
+            const total = counts.total || 1;
+            document.getElementById('summaryChart').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:0.75rem;">
+      ${barRow('Resolved', counts.resolved, total, '#2e7d32')}
+      ${barRow('In Progress', counts.inprogress, total, '#1565c0')}
+      ${barRow('Pending', counts.pending, total, '#e65100')}
+    </div>
+  `;
+        }
+
+        function barRow(label, val, total, color) {
+            const pct = Math.round((val / total) * 100);
+            return `<div>
+    <div style="display:flex;justify-content:space-between;font-size:0.8rem;color:var(--text-secondary);margin-bottom:4px;"><span>${label}</span><span>${val}</span></div>
+    <div style="background:var(--surface-2);border-radius:50px;height:8px;overflow:hidden;"><div style="height:100%;width:${pct}%;background:${color};border-radius:50px;transition:width 0.8s ease;"></div></div>
+  </div>`;
+        }
+
+        function complaintMiniCard(c) {
+            return `<div class="complaint-card" onclick="viewComplaint('${c.id}')">
+    <div class="complaint-card-header">
+      <div>
+        <div class="complaint-id">${c.id} · ${formatDate(c.date)}</div>
+        <div class="complaint-title">${c.subject}</div>
+      </div>
+      ${statusBadge(c.status)}
+    </div>
+    <div class="complaint-meta">
+      <span class="meta-item">📂 ${c.category}</span>
+      <span class="meta-item">${priorityTag(c.priority)}</span>
+    </div>
+  </div>`;
+        }
+
+        // ---- My Complaints ----
+        function renderMyComplaints() {
+            const q = (document.getElementById('mySearchInput').value || '').toLowerCase();
+            const st = document.getElementById('myStatusFilter').value;
+            const cat = document.getElementById('myCategoryFilter').value;
+            let list = getStudentComplaints(user.id).filter(c => {
+                if (st && c.status !== st) return false;
+                if (cat && c.category !== cat) return false;
+                if (q && !c.subject.toLowerCase().includes(q) && !c.id.toLowerCase().includes(q)) return false;
+                return true;
+            });
+            document.getElementById('myComplaintsList').innerHTML = list.length ? list.map(c => `
+    <div class="complaint-card" onclick="viewComplaint('${c.id}')">
+      <div class="complaint-card-header">
+        <div style="flex:1;">
+          <div class="complaint-id">${c.id} &nbsp;·&nbsp; ${formatDate(c.date)}</div>
+          <div class="complaint-title">${c.subject}</div>
+          <p style="font-size:0.82rem;color:var(--text-secondary);margin-top:0.3rem;">${c.description.substring(0, 100)}…</p>
+        </div>
+        <div style="text-align:right;">${statusBadge(c.status)}</div>
+      </div>
+      <div class="complaint-meta">
+        <span class="meta-item">📂 ${c.category}</span>
+        ${priorityTag(c.priority)}
+        <span class="meta-item">📅 Updated: ${formatDate(c.updatedDate)}</span>
+      </div>
+    </div>`).join('') : `<div class="empty-state"><div class="empty-icon">🔎</div><h3>No matching complaints</h3><p>Try changing your search or filter.</p></div>`;
+        }
+
+        // ---- View Complaint Detail ----
+        function viewComplaint(id) {
+            const c = COMPLAINTS.find(x => x.id === id);
+            if (!c) return;
+            const steps = [
+                { label: 'Submitted', done: true, date: c.date, desc: 'Your complaint was successfully submitted.' },
+                { label: 'Under Review', done: c.status !== 'pending', date: c.updatedDate, desc: 'Admin is reviewing your complaint.' },
+                { label: 'In Progress', done: ['in-progress', 'resolved'].includes(c.status), date: c.updatedDate, desc: c.response || 'Action is being taken.' },
+                { label: 'Resolved', done: c.status === 'resolved', date: c.status === 'resolved' ? c.updatedDate : null, desc: 'Your complaint has been resolved.' }
+            ];
+            document.getElementById('detailContent').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:0.5rem;">
+      <div><div class="complaint-id" style="font-size:0.85rem;">${c.id}</div><h3 style="font-size:1.2rem;font-weight:700;color:var(--primary);">${c.subject}</h3></div>
+      ${statusBadge(c.status)}
+    </div>
+    <div class="two-col" style="gap:0.75rem;margin-bottom:1.5rem;">
+      <div style="background:var(--surface-2);border-radius:10px;padding:0.75rem;font-size:0.82rem;"><b>Category</b><div style="margin-top:2px;color:var(--text-secondary);">${c.category}</div></div>
+      <div style="background:var(--surface-2);border-radius:10px;padding:0.75rem;font-size:0.82rem;"><b>Priority</b><div style="margin-top:4px;">${priorityTag(c.priority)}</div></div>
+      <div style="background:var(--surface-2);border-radius:10px;padding:0.75rem;font-size:0.82rem;"><b>Filed On</b><div style="margin-top:2px;color:var(--text-secondary);">${formatDate(c.date)}</div></div>
+      <div style="background:var(--surface-2);border-radius:10px;padding:0.75rem;font-size:0.82rem;"><b>Last Updated</b><div style="margin-top:2px;color:var(--text-secondary);">${formatDate(c.updatedDate)}</div></div>
+    </div>
+    <div style="margin-bottom:1.5rem;"><div class="form-label" style="margin-bottom:0.5rem;">Description</div><div style="background:var(--surface-2);padding:1rem;border-radius:10px;font-size:0.88rem;line-height:1.7;color:var(--text-secondary);">${c.description}</div></div>
+    ${c.response ? `<div style="margin-bottom:1.5rem;"><div class="form-label" style="margin-bottom:0.5rem;">Admin Response</div><div style="background:#e8f5e9;padding:1rem;border-radius:10px;font-size:0.88rem;line-height:1.7;color:#2e7d32;border-left:3px solid #2e7d32;">💬 ${c.response}</div></div>` : ''}
+    <div class="section-title" style="margin-bottom:1rem;">📍 Progress Timeline</div>
+    <div class="timeline" style="margin-left:1rem;">
+      ${steps.map(s => `<div class="timeline-item"><div class="timeline-dot ${s.done ? 'completed' : 'pending'}"></div><div class="timeline-date">${s.date ? formatDate(s.date) : 'Pending'}</div><div class="timeline-text">${s.label}</div><div class="timeline-desc">${s.desc}</div></div>`).join('')}
+    </div>
+  `;
+            openModal('detailModal');
+        }
+
+        // ---- Track Complaint ----
+        function trackComplaint() {
+            const id = document.getElementById('trackId').value.trim().toUpperCase();
+            const c = COMPLAINTS.find(x => x.id === id && x.studentId === user.id);
+            if (!c) {
+                document.getElementById('trackResult').innerHTML = `<div style="background:#fff5f5;border:1px solid #ffcdd2;border-radius:10px;padding:1rem;color:var(--danger);font-size:0.88rem;">❌ No complaint found with ID <strong>${id}</strong>. Please check and try again.</div>`;
+                return;
+            }
+            viewComplaint(id);
+            document.getElementById('trackResult').innerHTML = `<div style="background:#e8f5e9;border:1px solid #c8e6c9;border-radius:10px;padding:0.75rem;color:#2e7d32;font-size:0.88rem;">✅ Opened complaint details. Check the popup.</div>`;
+        }
+
+        // ---- Submit Complaint ----
+        function submitComplaint(e) {
+            e.preventDefault();
+            const c = addComplaint({
+                studentId: user.id, studentName: user.name, dept: user.dept,
+                category: document.getElementById('cmpCategory').value,
+                subject: document.getElementById('cmpSubject').value,
+                description: document.getElementById('cmpDesc').value,
+                priority: document.getElementById('cmpPriority').value,
+                status: 'pending'
+            });
+            showToast(`✅ Complaint ${c.id} submitted successfully!`, 'success');
+            document.getElementById('complaintForm').reset();
+            document.getElementById('filePreview').textContent = '';
+            updatePendingBadge();
+            showSection('mycomplaints');
+        }
+
+        function previewFile(input) {
+            if (input.files && input.files[0]) {
+                document.getElementById('filePreview').textContent = '📎 ' + input.files[0].name;
+            }
+        }
+
+        // ---- Profile ----
+        function populateProfile() {
+            document.getElementById('profileName').textContent = user.name;
+            document.getElementById('profileDept').textContent = user.dept;
+            document.getElementById('profileYear').textContent = user.year;
+            document.getElementById('profileEmail').textContent = user.email;
+            document.getElementById('profilePhone').textContent = user.phone;
+            document.getElementById('profileId').textContent = user.id;
+            document.getElementById('profileAvatarBig').innerHTML = user.name.charAt(0).toUpperCase() + `<div class="avatar-edit">✏️</div>`;
+            document.getElementById('editName').value = user.name;
+            document.getElementById('editPhone').value = user.phone;
+            document.getElementById('editEmail').value = user.email;
+        }
+        function saveProfile() { showToast('Profile updated successfully!', 'success'); }
+        function changePassword() {
+            const cur = document.getElementById('curPass').value;
+            if (cur !== user.password) { showToast('Current password is incorrect', 'error'); return; }
+            showToast('Password changed successfully!', 'success');
+            document.getElementById('curPass').value = '';
+            document.getElementById('newPass').value = '';
+        }
+
+        // ---- Notifications ----
+        function renderNotifications() {
+            const notifs = [
+                { icon: '✅', cls: 'green', title: 'Complaint CMP-2024-001 Resolved', time: '2 days ago', unread: false },
+                { icon: '💬', cls: 'blue', title: 'Admin replied to CMP-2024-002', time: '3 days ago', unread: true },
+                { icon: '⏳', cls: 'orange', title: 'CMP-2024-005 is now In Progress', time: '5 days ago', unread: true },
+                { icon: '🔔', cls: 'blue', title: 'Welcome to SNMV Complaint Portal!', time: '1 week ago', unread: false }
+            ];
+            document.getElementById('notifList').innerHTML = notifs.map(n => `
+    <li class="notif-item">
+      <div class="notif-icon ${n.cls}">${n.icon}</div>
+      <div class="notif-text"><p>${n.title}</p><span>${n.time}</span></div>
+      ${n.unread ? '<div class="notif-dot-unread"></div>' : ''}
+    </li>`).join('');
+        }
+
+        // ---- Misc ----
+        function updatePendingBadge() {
+            const count = getStudentComplaints(user.id).filter(c => c.status === 'pending').length;
+            document.getElementById('pendingBadge').textContent = count;
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+        }
+    </script>
+</body>
+
+</html>
