@@ -3,12 +3,31 @@
 // =============================================
 
 // ---------- Data Store ----------
-const USERS = [
+const DEFAULT_USERS = [
   { id: 'STU001', password: 'student123', role: 'student', name: 'Arun Kumar', dept: 'Computer Science', year: '3rd Year', email: 'arun@snmv.edu.in', phone: '9876543210' },
   { id: 'STU002', password: 'student123', role: 'student', name: 'Priya Devi', dept: 'Mathematics', year: '2nd Year', email: 'priya@snmv.edu.in', phone: '9876543211' },
   { id: 'STU003', password: 'student123', role: 'student', name: 'Ravi Shankar', dept: 'Physics', year: '1st Year', email: 'ravi@snmv.edu.in', phone: '9876543212' },
-  { id: 'admin',  password: 'admin@2024', role: 'admin',   name: 'Dr. S. Meenakshi', dept: 'Administration', year: '', email: 'admin@snmv.edu.in', phone: '9876543200' }
+  { id: 'admin', password: 'admin@2024', role: 'admin', name: 'Dr. S. Meenakshi', dept: 'Administration', year: '', email: 'admin@snmv.edu.in', phone: '9876543200' }
 ];
+
+function initDatabase() {
+  if (!localStorage.getItem('ocm_users')) {
+    localStorage.setItem('ocm_users', JSON.stringify(DEFAULT_USERS));
+  }
+}
+
+// Call on script load
+initDatabase();
+
+function getAllUsers() {
+  return JSON.parse(localStorage.getItem('ocm_users') || '[]');
+}
+
+function saveUser(user) {
+  const users = getAllUsers();
+  users.push(user);
+  localStorage.setItem('ocm_users', JSON.stringify(users));
+}
 
 let COMPLAINTS = [
   { id: 'CMP-2024-001', studentId: 'STU001', studentName: 'Arun Kumar', dept: 'Computer Science', category: 'Academic', subject: 'Lab equipment not working', description: 'The computers in Lab 3 are not functioning properly. Many systems crash frequently during practicals.', priority: 'high', status: 'resolved', date: '2024-11-10', updatedDate: '2024-11-15', response: 'Issue has been resolved. New systems have been installed in Lab 3.', attachments: [] },
@@ -24,7 +43,20 @@ let cmpCounter = COMPLAINTS.length + 1;
 
 // ---------- Auth ----------
 function getUser(id, pass) {
-  return USERS.find(u => u.id === id && u.password === pass) || null;
+  const users = getAllUsers();
+  return users.find(u => (u.id === id || u.email === id) && u.password === pass) || null;
+}
+
+function switchAuthTab(tab) {
+  const loginBtn = document.getElementById('tabLoginBtn');
+  const regBtn = document.getElementById('tabRegisterBtn');
+  if (loginBtn) loginBtn.classList.toggle('active', tab === 'login');
+  if (regBtn) regBtn.classList.toggle('active', tab === 'register');
+
+  const loginView = document.getElementById('loginView');
+  const regView = document.getElementById('registerView');
+  if (loginView) loginView.style.display = tab === 'login' ? 'block' : 'none';
+  if (regView) regView.style.display = tab === 'register' ? 'block' : 'none';
 }
 
 function setRole(role) {
@@ -70,9 +102,71 @@ function handleLogin(e) {
   }, 900);
 }
 
-function togglePassword() {
-  const inp = document.getElementById('loginPass');
-  inp.type = inp.type === 'password' ? 'text' : 'password';
+function togglePassword(inputId = 'loginPass') {
+  const inp = document.getElementById(inputId);
+  if (inp) inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function handleRegister(e) {
+  e.preventDefault();
+
+  const name = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim();
+  const dept = document.getElementById('regDept').value;
+  const year = document.getElementById('regYear').value;
+  const phone = document.getElementById('regPhone').value.trim();
+  const pass = document.getElementById('regPass').value;
+  const errEl = document.getElementById('regError');
+  const btn = document.getElementById('registerBtn');
+
+  errEl.style.display = 'none';
+
+  if (!name || !email || !dept || !year || !phone || !pass) {
+    errEl.textContent = '❌ All fields are required.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const users = getAllUsers();
+  if (users.find(u => u.email.toLowerCase() === email.toLowerCase())) {
+    errEl.textContent = '❌ Email is already registered.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  btn.querySelector('.btn-text').style.display = 'none';
+  btn.querySelector('.btn-loader').style.display = 'inline';
+
+  setTimeout(() => {
+    const stuCount = users.filter(u => u.role === 'student').length;
+    const newId = `STU${String(stuCount + 1).padStart(3, '0')}`;
+
+    const newUser = {
+      id: newId,
+      password: pass,
+      role: 'student',
+      name: name,
+      dept: dept,
+      year: year,
+      email: email,
+      phone: phone
+    };
+
+    saveUser(newUser);
+
+    btn.querySelector('.btn-text').style.display = 'inline';
+    btn.querySelector('.btn-loader').style.display = 'none';
+
+    document.getElementById('registerForm').reset();
+    showToast(`Registration successful! Your Student ID is ${newId}`, 'success');
+
+    setTimeout(() => {
+      switchAuthTab('login');
+      const loginIdInput = document.getElementById('loginId');
+      if (loginIdInput) loginIdInput.value = email;
+    }, 1500);
+
+  }, 1000);
 }
 
 function showForgotModal() {
